@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,18 @@ using System.Threading.Tasks;
 
 namespace CsharpDataOriented;
 
-public record PropSeq(string Name, IEnumerable<PropSeq> Complex = null, object Primitive = null);
+public class Seq : IEnumerable<object>
+{
+    private IEnumerable<object> actualSeq;
 
-public delegate PropSeq Sequencer<T>(T obj);
+    public Seq(IEnumerable<object> actualSeq)
+    {
+        this.actualSeq = actualSeq;
+    }
 
-public delegate PropSeq Sequencer(object obj);
+    public IEnumerator GetEnumerator()
+        => actualSeq.GetEnumerator();
+
+    IEnumerator<object> IEnumerable<object>.GetEnumerator()
+        => actualSeq.GetEnumerator();
+}

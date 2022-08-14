@@ -11,13 +11,13 @@ namespace CsharpDataOriented;
 
 public static class SequenceModule
 {
-    public static Sequencer<T> Seq<T>(T sampleType)
+    public static Func<T, Seq> Seq<T>(T sampleType)
         => (arg) => Seq(typeof(T)).Invoke(arg);
 
-    public static Sequencer<T> Seq<T>()
+    public static Func<T, Seq> Seq<T>()
         => (arg) => Seq(typeof(T)).Invoke(arg);
 
-    public static Sequencer Seq(Type type)
+    public static Func<object, Seq> Seq(Type type)
     {
         var props = type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty)
@@ -30,14 +30,14 @@ public static class SequenceModule
                 var val = prop.getter.Invoke(obj);
 
                 if (val is null || LeaveAsIs(val))
-                    return new PropSeq(Name: prop.name, Primitive: val);
+                    return new Seq(new object[] { prop.name, new Seq(new[] { val }) });
 
                 var seqVal = Seq(val.GetType()).Invoke(val);
 
-                return new PropSeq(prop.name, Complex: seqVal.Complex);
+                return new Seq(new object[] { prop.name, seqVal });
             });
 
-            return new PropSeq(Name: ".", Complex: complex);
+            return new Seq(complex);
         };
     }
 

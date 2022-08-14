@@ -30,7 +30,7 @@ public class ClassAsCollectionTests
 
         var objColl = seq(person);
 
-        Assert.Equal(3, objColl.Complex.Count());
+        Assert.Equal(3, objColl.Count());
     }
 
     [Fact]

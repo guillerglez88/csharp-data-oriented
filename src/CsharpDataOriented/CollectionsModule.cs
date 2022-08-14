@@ -12,17 +12,18 @@ public static class CollectionsModule
         => source ?? Enumerable.Empty<T>();
 
     public static W? Get<W>(
-        this PropSeq seq,
+        this Seq seq,
         string[] path)
     {
-        var getValue = DefMulti((PropSeq propSeq) => default(W), DispatchByProp<PropSeq>(ignoreProps: new[] { nameof(PropSeq.Name) }))
-            .DefMethod(nameof(PropSeq.Complex), (propSeq) => { throw new InvalidOperationException($"Ilegal access"); })
-            .DefMethod(nameof(PropSeq.Primitive), (propSeq) => (W)propSeq.Primitive);
-
         var leaf = path
             .OrEmpty()
-            .Aggregate(seq, (acc, curr) => acc.Complex.First(p => p.Name == curr));
+            .Aggregate(seq, (acc, curr) => acc
+                .Cast<Seq>()
+                .First(seq => Equals((string)seq.First(), curr))
+                .Skip(1)
+                .Cast<Seq>()
+                .First());
 
-        return getValue.Invoke(leaf);
+        return leaf.Cast<W>().First();
     }
 }
