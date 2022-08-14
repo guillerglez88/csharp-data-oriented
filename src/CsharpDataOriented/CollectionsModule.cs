@@ -1,49 +1,28 @@
 ﻿using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
+using static CsharpMultimethod.PropBasedMultiExtensions;
+using static CsharpMultimethod.MultimethodsModule;
 
 namespace CsharpDataOriented;
-public class CollectionsModule
+
+public static class CollectionsModule
 {
-    public static Func<T, IEnumerable<object?>> Seq<T>(T sampleType)
-        => (arg) => Seq(typeof(T)).Invoke(arg);
+    public static IEnumerable<T> OrEmpty<T>(this IEnumerable<T> source)
+        => source ?? Enumerable.Empty<T>();
 
-    public static Func<T, IEnumerable<object?>> Seq<T>()
-        => (arg) => Seq(typeof(T)).Invoke(arg);
-
-    public static Func<object, IEnumerable<object?>> Seq(Type type)
+    public static W? Get<W>(
+        this PropSeq seq,
+        string[] path)
     {
-        var props = type
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty)
-            .Select(prop => new { name = prop.Name, getter = BuildGetter(prop) });
+        var getValue = DefMulti((PropSeq propSeq) => default(W), DispatchByProp<PropSeq>(ignoreProps: new[] { nameof(PropSeq.Name) }))
+            .DefMethod(nameof(PropSeq.Complex), (propSeq) => { throw new InvalidOperationException($"Ilegal access"); })
+            .DefMethod(nameof(PropSeq.Primitive), (propSeq) => (W)propSeq.Primitive);
 
-        return (obj) => props
-            .Select(prop =>
-            {
-                var val = prop.getter.Invoke(obj);
+        var leaf = path
+            .OrEmpty()
+            .Aggregate(seq, (acc, curr) => acc.Complex.First(p => p.Name == curr));
 
-                if (val is null || LeaveAsIs(val))
-                    return new object[] { prop.name, val };
-
-                var seqVal = Seq(val.GetType()).Invoke(val);
-
-                return new object[] { prop.name, seqVal };
-            });
+        return getValue.Invoke(leaf);
     }
-
-    public static Func<object, object?> BuildGetter(PropertyInfo prop)
-    {
-        var param = Expression.Parameter(typeof(object), "obj");
-        var castParam = Expression.Convert(param, prop.DeclaringType);
-        var memberAccess = Expression.MakeMemberAccess(castParam, prop);
-        var castResult = Expression.Convert(memberAccess, typeof(object));
-        var getter = Expression.Lambda<Func<object, object?>>(castResult, param);
-
-        return getter.Compile();
-    }
-
-    public static bool LeaveAsIs<T>(T obj)
-        => obj.GetType().IsPrimitive
-        || typeof(IEnumerable).IsAssignableFrom(obj.GetType())
-        || typeof(DateTime).IsAssignableFrom(obj.GetType());
 }
