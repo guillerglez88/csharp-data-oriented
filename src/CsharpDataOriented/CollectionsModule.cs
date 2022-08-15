@@ -17,12 +17,10 @@ public static class CollectionsModule
     {
         var leaf = path
             .OrEmpty()
-            .Aggregate(seq, (acc, curr) => acc
+            .Aggregate(seq, (acc, curr) => (Seq)(acc
                 .Cast<Seq>()
                 .First(seq => Equals((string)seq.First(), curr))
-                .Skip(1)
-                .Cast<Seq>()
-                .First());
+                .Last()));
 
         return leaf.Cast<W>().First();
     }

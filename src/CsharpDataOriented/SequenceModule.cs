@@ -7,39 +7,77 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+using static CsharpMultimethod.MultimethodsModule;
+using static CsharpMultimethod.TypeBasedMultiExtensions;
+using static CsharpDataOriented.BasicFuncs;
+
 namespace CsharpDataOriented;
 
 public static class SequenceModule
 {
-    public static Func<T, Seq> Seq<T>(T sampleType)
-        => (arg) => Seq(typeof(T)).Invoke(arg);
+    private static readonly Func<Type, object, IEnumerable<SeqProp>?> getProps;
 
-    public static Func<T, Seq> Seq<T>()
-        => (arg) => Seq(typeof(T)).Invoke(arg);
-
-    public static Func<object, Seq> Seq(Type type)
+    static SequenceModule()
     {
-        var props = type
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty)
-            .Select(prop => new { name = prop.Name, getter = BuildGetter(prop) });
+        var memoGetPropsComplex = Memoize((Type t) => GetPropsComplex(t));
 
-        return (obj) =>
-        {
-            var complex = props.Select(prop =>
-            {
-                var val = prop.getter.Invoke(obj);
+        var getPropsMulti = DefMulti(
+                contract: ((Type type, object val) arg) => default(IEnumerable<SeqProp>),
+                dispatch: (arg) => DispatchByType(arg.type))
+            .DefMethod("primitive", (_) => GetPropsPrimitive())
+            .DefMethod("dict", (arg) => GetPropsDict((IDictionary<string, dynamic>)arg.val))
+            .DefMethod("collection", (arg) => GetPropsCollection((IEnumerable<dynamic>)arg.val))
+            .DefMethod("complex", (arg) => memoGetPropsComplex.Invoke(arg.type));
 
-                if (val is null || LeaveAsIs(val))
-                    return new Seq(new object[] { prop.name, new Seq(new[] { val }) });
-
-                var seqVal = Seq(val.GetType()).Invoke(val);
-
-                return new Seq(new object[] { prop.name, seqVal });
-            });
-
-            return new Seq(complex);
-        };
+        getProps = (type, val) => getPropsMulti.Invoke((type, val));
     }
+
+    public static Seq Seq<T>(T arg)
+        where T : notnull
+    {
+        var props = getProps(arg.GetType(), arg)
+            .Select(prop => (
+                name: prop.Name,
+                isLeaf: prop.Name == ".",
+                value: prop.GetValue(arg)))
+            .Select(prop => prop.isLeaf
+                ? prop.value
+                : new Seq(new[] { prop.name, Seq((dynamic)prop.value) }));
+
+        return new Seq(props);
+    }
+
+    public static string DispatchByType(Type type)
+    {
+        if (type.IsPrimitive
+            || typeof(DateTime).IsAssignableFrom(type)
+            || typeof(string).IsAssignableFrom(type))
+            return "primitive";
+        if (typeof(IDictionary<,>).IsAssignableFrom(type))
+            return "dict";
+        if (typeof(IEnumerable).IsAssignableFrom(type))
+            return "collection";
+
+        return "complex";
+    }
+
+    public static IEnumerable<SeqProp> GetPropsPrimitive() => new[] { new SeqProp(
+        Name: ".",
+        GetValue: Identity) };
+
+    public static IEnumerable<SeqProp> GetPropsDict<T>(IDictionary<string, T> dict) => dict.Select(e => new SeqProp(
+        Name: e.Key,
+        GetValue: (_) => dict[e.Key]));
+
+    public static IEnumerable<SeqProp> GetPropsCollection<T>(IEnumerable<T> source) => source.Select((e, i) => new SeqProp(
+        Name: $"{i}",
+        GetValue: (_) => e));
+
+    public static IEnumerable<SeqProp> GetPropsComplex(Type type) => type
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty)
+        .Select(prop => new SeqProp(
+            Name: prop.Name,
+            GetValue: BuildGetter(prop)));
 
     public static Func<object, object?> BuildGetter(PropertyInfo prop)
     {
@@ -51,9 +89,4 @@ public static class SequenceModule
 
         return getter.Compile();
     }
-
-    public static bool LeaveAsIs<T>(T obj)
-        => obj.GetType().IsPrimitive
-        || typeof(IEnumerable).IsAssignableFrom(obj.GetType())
-        || typeof(DateTime).IsAssignableFrom(obj.GetType());
 }

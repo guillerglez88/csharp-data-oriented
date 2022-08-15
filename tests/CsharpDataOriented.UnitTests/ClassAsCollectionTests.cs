@@ -26,33 +26,21 @@ public class ClassAsCollectionTests
     [Fact]
     public void CanListClassProps()
     {
-        var seq = Seq(person.GetType());
+        var objColl = Seq(person);
 
-        var objColl = seq(person);
+        var result = objColl.ToList();
 
-        Assert.Equal(3, objColl.Count());
+        Assert.Equal(3, result.Count());
     }
 
     [Fact]
     public void CanGetPropByPath()
     {
-        var seq = Seq(person.GetType());
-
-        var personSeq = seq(person);
+        var personSeq = Seq(person);
         var lastName = personSeq.Get<string>(path: new[] { "Name", "Family" });
+        var addrLine = personSeq.Get<string>(path: new[] { "Addresses", "0", "Lines", "0" });
 
         Assert.Equal("Rodriguez", lastName);
-    }
-
-    [Fact]
-    public void CanRecognizeSeqTypes()
-    {
-        var nameArr = new[] { "Glenis", "Mayra" };
-        var nameList = nameArr.ToList();
-        var nameDict = nameArr.ToDictionary(n => n);
-
-        Assert.True(LeaveAsIs(nameArr));
-        Assert.True(LeaveAsIs(nameList));
-        Assert.True(LeaveAsIs(nameDict));
+        Assert.Equal("184 #42301, esq 423" , addrLine);
     }
 }
