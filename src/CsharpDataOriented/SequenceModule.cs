@@ -21,7 +21,7 @@ public static class SequenceModule
     {
         var memoGetPropsComplex = Memoize((Type t) => GetPropsComplex(t));
 
-        var getPropsMulti = DefMulti(
+        var getPropsMulti = DefMulti( 
                 contract: ((Type type, object val) arg) => default(IEnumerable<SeqProp>),
                 dispatch: (arg) => DispatchByType(arg.type))
             .DefMethod("primitive", (_) => GetPropsPrimitive())

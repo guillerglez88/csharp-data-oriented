@@ -1,6 +1,6 @@
 namespace CsharpDataOriented.UnitTests;
 
-public class SanityChecks
+public class HealthChecks
 {
     [Fact]
     public void CanTest() => Assert.Equal(5, 2 + 3);
