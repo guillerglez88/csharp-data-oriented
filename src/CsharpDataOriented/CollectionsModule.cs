@@ -28,6 +28,33 @@ public static class CollectionsModule
 
     }
 
+    public static T Nth<T>(this IEnumerable source, int n)
+        => source.Nth<T>(n, null);
+
+    public static T Nth<T>(this IEnumerable source, int n, T notFound)
+        where T : struct
+        => source.Nth(n, () => notFound);
+
+    public static T Nth<T>(this IEnumerable source, int n, Func<T>? notFound = null)
+    {
+        var getDefault = notFound ?? new Func<T>(() => throw new ArgumentOutOfRangeException(nameof(n)));
+
+        var actualSource = source.Cast<object>();
+
+        if (n < 0)
+            return actualSource
+                .Partition(size: n * -1, step: 1)
+                .Where(part => part.Count() == n * -1)
+                .LastOrDefault()
+                .OrEmpty()
+                .Reverse()
+                .Nth((n * -1) - 1, getDefault);
+
+        var firstN = actualSource.Take(n + 1);
+
+        return firstN.Count() == n + 1 ? firstN.Skip(n).Cast<T>().First() : getDefault();
+    }
+
     public static W? Get<W>(
         this Seq seq,
         string[] path)
