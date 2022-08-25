@@ -1,12 +1,8 @@
 ﻿using System.Collections;
-using System.Linq.Expressions;
-using System.Reflection;
-using static CsharpMultimethod.PropBasedMultiExtensions;
-using static CsharpMultimethod.MultimethodsModule;
 
 namespace CsharpDataOriented;
 
-public static class CollectionsModule
+public static class Collections
 {
     public static IEnumerable<T> OrEmpty<T>(this IEnumerable<T> source)
         => source ?? Enumerable.Empty<T>();
@@ -53,19 +49,5 @@ public static class CollectionsModule
         var firstN = actualSource.Take(n + 1);
 
         return firstN.Count() == n + 1 ? firstN.Skip(n).Cast<T>().First() : getDefault();
-    }
-
-    public static W? Get<W>(
-        this Seq seq,
-        string[] path)
-    {
-        var leaf = path
-            .OrEmpty()
-            .Aggregate(seq, (acc, curr) => (Seq)(acc
-                .Cast<Seq>()
-                .First(seq => Equals((string)seq.First(), curr))
-                .Last()));
-
-        return leaf.Cast<W>().First();
-    }
+    } 
 }

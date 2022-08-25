@@ -5,11 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.0-beta1</Version>
+    <Version>1.0.0-beta3</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsharpMultimethod" Version="1.0.0-beta" />
+    <PackageReference Include="CsharpMultimethod" Version="1.0.0-beta1" />
   </ItemGroup>
 
 </Project>
