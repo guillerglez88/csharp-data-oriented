@@ -14,11 +14,17 @@ public class SequenceTests
     public void CanGetPropByPath()
     {
         var personSeq = Seq(Fixture.Person);
+
         var lastName = personSeq.Get<string>("Name", "Family");
         var addrLine = personSeq.Get<string>("Addresses", "0", "Lines", "0");
+        var givenName = personSeq
+            .Get("Name", "Given")
+            .Cast<Seq>()
+            .Select(item => item.Nth<Seq>(1).Nth<string>(0));
 
         Assert.Equal("Rodriguez", lastName);
         Assert.Equal("184 #42301, esq 423", addrLine);
+        Assert.Contains("Ruben", givenName);
     }
 
     [Fact]
