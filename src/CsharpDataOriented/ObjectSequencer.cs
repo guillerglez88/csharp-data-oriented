@@ -37,6 +37,9 @@ public class ObjectSequencer
     public static Seq Seq<T>(T arg)
         where T : notnull
     {
+        if (arg is Seq seq)
+            return seq;
+
         var props = getProps(arg.GetType(), arg)
             .Select(prop => (
                 name: prop.Name,
