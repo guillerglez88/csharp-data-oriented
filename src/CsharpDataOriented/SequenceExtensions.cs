@@ -12,7 +12,7 @@ public static class SequenceExtensions
 {
     public static T Get<T>(
         this Seq seq,
-        params string[] path)
+        params object[] path)
     {
         var result = seq.Get(path);
 

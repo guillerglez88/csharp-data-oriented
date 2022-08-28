@@ -33,9 +33,17 @@ public class SequenceTests
         var personSeq = Seq(Fixture.Person);
 
         var postalCodes = personSeq.Get("Addresses", null, "PostalCode");
-        var strPostalCodes = $"[{string.Join(", ", postalCodes.Cast<Seq>().Select(item => item.Nth<string>(0)))}]";
+        var strPostalCodes = $"[{string.Join(", ", postalCodes.Cast<Seq>().Select(item => item.Nth<Seq>(1).Get<string>()))}]";
 
         Assert.Equal("[18100, 11100]", strPostalCodes);
+    }
+
+    [Fact(Skip = "not implemented")]
+    public void CanGetByExample()
+    {
+        var personSeq = Seq(Fixture.Person);
+
+        var postalCodes = personSeq.Get("Addresses", new { Country = new { Code = "CU" } });
     }
 
     [Fact]
