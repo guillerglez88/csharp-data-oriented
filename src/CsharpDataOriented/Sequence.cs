@@ -18,18 +18,44 @@ public static class Sequence
         where T : notnull
         => ObjectSequencer.Seq(arg);
 
-    public static Seq Get(
+    public static Seq? Get(
         this Seq seq,
         params string[] path)
     {
-        var leaf = path
-            .OrEmpty()
-            .Aggregate(seq, (acc, curr) =>
-                acc is null ? acc : (Seq)(acc
-                .Cast<Seq>()
-                .FirstOrDefault(seq => Equals(seq.Nth<string>(0), curr))?.Last()));
+        if (seq is null)
+            return seq;
 
-        return leaf;
+        if (!path.OrEmpty().Any())
+            return seq;
+
+        if (path.First() is null)
+        {
+            return S(Enumerable
+                .Range(0, int.MaxValue)
+                .Select(i => seq.Get($"{i}"))
+                .TakeWhile(s => s != null)
+                .Cast<Seq>()
+                .ToArray());
+        }
+
+        if (path.Length == 1)
+        {
+            return (Seq)seq
+                .Cast<Seq>()
+                .FirstOrDefault(seq =>
+                    Equals(seq.Nth<string>(0), path.First()))?
+                .Last();
+        }
+
+        var result = path.Aggregate(S(seq), (acc, curr) => S(acc
+            .Cast<Seq>()
+            .SelectMany(s => curr is null 
+                ? s.Get(curr)
+                : S(s.Get(curr)))
+            .Cast<Seq>()
+            .ToArray()));
+
+        return result.Count() == 1 ? result.Nth<Seq>(0) : result;
     }
 
     public static Seq With(

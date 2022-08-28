@@ -28,14 +28,27 @@ public class SequenceTests
     }
 
     [Fact]
+    public void CanGetAllByPath()
+    {
+        var personSeq = Seq(Fixture.Person);
+
+        var postalCodes = personSeq.Get("Addresses", null, "PostalCode");
+        var strPostalCodes = $"[{string.Join(", ", postalCodes.Cast<Seq>().Select(item => item.Nth<string>(0)))}]";
+
+        Assert.Equal("[18100, 11100]", strPostalCodes);
+    }
+
+    [Fact]
     public void CanExtendSeq()
     {
         var dob = new DateTime(2009, 10, 3);
         var personSeq = Seq(Fixture.Person);
 
-        var extended = personSeq.With(new {
+        var extended = personSeq.With(new
+        {
             DoB = dob,
-            Gender = "Male" });
+            Gender = "Male"
+        });
 
         Assert.Equal(dob, extended.Get<DateTime>("DoB"));
         Assert.Equal("Male", extended.Get<string>("Gender"));

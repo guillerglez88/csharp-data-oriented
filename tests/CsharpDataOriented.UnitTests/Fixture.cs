@@ -16,10 +16,16 @@ public class Fixture
             Family = "Rodriguez"
         },
         DoB = new DateTime(2011, 10, 3),
-        Addresses = new[] {
+        Addresses = new object[] {
             new {
                 Lines = new[] { "184 #42301, esq 423" },
                 PostalCode = "18100",
-                Period = new { Start = new DateTime(2019, 04, 17) } } }
+                Period = new { Start = new DateTime(2019, 04, 17) } },
+            new {
+                Lines = new[] { "1ra #6612 Int." },
+                PostalCode = "11100",
+                Period = new {
+                    Start = new DateTime(2001, 08, 14),
+                    End = new DateTime(2016, 07, 05)} } }
     };
 }
